@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "ionic.ionic",
+        "vue.volar",
+        "vue.vscode-typescript-vue-plugin",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+    ]
+}
