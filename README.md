@@ -36,7 +36,10 @@
    # 或使用 yarn
    yarn install
    ```
-
+4.安装相关语法高亮插件
+    1.prettier ESLint
+    2.TypeScript Vue Plugin(Volar)
+    3.vue    ---Syntax Highlight for Vue.js
 ## 开发命令
 
 ### 开发服务器
