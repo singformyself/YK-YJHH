@@ -15,14 +15,14 @@
 </template>
 <script setup lang="ts">
 import AMapLoader from "@amap/amap-jsapi-loader";
-import {onMounted, onUnmounted, ref} from "vue";
+import {onMounted, onUnmounted} from "vue";
 import {IonPage, IonContent, IonCard, IonCardContent, IonButton, IonImg} from '@ionic/vue';
 // 引入 useRouter 函数
 import { useRouter } from 'vue-router';
 import { useGlobalStore } from '../store/globalStore ';
 
 const store = useGlobalStore();
-const { updateLocationRef, getMapRef,setMapRef } = store;
+const { setLocation} = store;
 // 获取路由实例
 const router = useRouter();
 
@@ -33,63 +33,66 @@ const geolocationConfig = {
   zoomToAccuracy: true,  // 定位成功后调整地图视野范围使定位位置及精度范围视野内可见，默认：false
   position: 'RB' // 定位按钮的排放位置, RB表示右下
 };
-let map=null;
+let aMap:any=null;
 // 定义定位实例变量
-let geolocation = null;
+let geolocation:any = null;
 // 定义监听ID变量
-let watchId = null;
+let watchId:any = null;
 onMounted(() => {
   // 加载高德地图 JSAPI
   AMapLoader.load({
     key: "23376e224c66bd2866d51f4930e197bb", // 申请好的Web端开发者Key，首次调用 load 时必填
     version: "2.0", // 指定要加载的 JSAPI 的版本，缺省时默认为 1.4.15
-    plugins: ["PlaceSearch", "Geolocation"], // 需要使用的的插件列表，如比例尺'AMap.Scale'等
+    plugins: ["AMap.Geolocation"], // 需要使用的的插件列表，如比例尺'AMap.Scale'等
   })
       .then((AMap) => {
         // 创建地图实例
-         map = new AMap.Map("container", {
+        aMap = new AMap.Map("container", {
           viewMode: "3D", // 是否为3D地图模式
           zoom: 12, // 初始化地图级别
         });
-        // 赋值到全局变量
-        setMapRef(map)
+
         // 加载定位插件
-        map.plugin('AMap.Geolocation', () => {
+        aMap.plugin('AMap.Geolocation', () => {
           // 创建定位实例
           geolocation = new AMap.Geolocation(geolocationConfig);
+          geolocation.getCurrentPosition(handlePositionResult);
           // 将定位控件添加到地图上
-          map.addControl(geolocation);
+          aMap.addControl(geolocation);
           // 开始监听位置变化
-          watchId = geolocation.watchPosition(handlePositionResult);
+          //watchId = geolocation.watchPosition(handlePositionResult);
         });
       })
       .catch((e) => {
         console.log(e);
       });
 });
-onUnmounted(function(){
-  this.map.destroy()
-})
 
-
-// onUnmounted(() => {
-//   // 销毁地图
-//   if(this.AMap.map.value){
-//     map.destroy()
-//   }
-//   // 停止监听位置变化
-//   if (geolocation && watchId) {
-//     geolocation.clearWatch(watchId);
-//   }
-// });
+onUnmounted(() => {
+  // 销毁地图
+  if(aMap){
+    aMap.destroy()
+    //地图对象赋值为null
+    aMap = null
+//清除地图容器的 DOM 元素
+    const container = document.getElementById("container");
+    if (container) {
+      container.remove();
+    }
+  }
+  // 停止监听位置变化
+  if (geolocation && watchId) {
+    geolocation.clearWatch(watchId);
+  }
+});
 
 // 处理定位结果的函数
-function handlePositionResult(status:any, result:any) {
+function handlePositionResult(status:string, result:any) {
   if (status === 'complete') {
     onComplete(result);
-    updateLocationRef(result.position)
+    setLocation(result.position.lng,result.position.lat)
   } else {
-    onError(status);
+    onError(result);
   }
 
   // 定位成功的回调函数
@@ -107,6 +110,11 @@ function handlePositionResult(status:any, result:any) {
 const search=()=>{
   router.push("/search")
 }
+// 使用 defineExpose 暴露变量
+defineExpose({
+  aMap,
+});
+
 </script>
 
 <style scoped>

@@ -5,24 +5,25 @@
         <ion-buttons slot="start">
           <ion-back-button default-href="/tabs/tab1"></ion-back-button>
         </ion-buttons>
-        <ion-title></ion-title>
       </ion-toolbar>
     </ion-header>
-
+    <!-- 搜索输入框 -->
+    <ion-searchbar class="searchBar" araria-hidden="false" id="search" @ionChange="onSearch"
+                   placeholder="请输入搜索内容"></ion-searchbar>
     <ion-content :fullscreen="true" class="ion-padding">
-      <!-- 搜索输入框 -->
-      <ion-searchbar id="search" @ionChange="onSearch" placeholder="请输入搜索内容"></ion-searchbar>
-
       <!-- 搜索结果列表 -->
-      <ion-list v-if="searchResults.length > 0">
+      <ion-list v-if="searchResults.length > 0" :aria-hidden="searchResults.length === 0">
         <ion-item v-for="(result, index) in searchResults" :key="index" @click="onResultClick(result)">
-          <ion-label>{{ result.name }}</ion-label>
+          <ion-label>
+            <h3>{{ result.name }}</h3>
+            <p style="font-size: small">{{ result.address }}</p>
+          </ion-label>
         </ion-item>
       </ion-list>
 
       <!-- 没有搜索结果时的提示 -->
-      <div v-else-if="query && searchResults.length === 0" class="no-results">
-        没有找到相关结果
+      <div v-else-if="query && searchResults.length === 0" class="no-results" :aria-hidden="searchResults.length > 0">
+        --没有找到相关结果--
       </div>
 
     </ion-content>
@@ -41,40 +42,44 @@ import {
   IonSearchbar,
   IonList,
   IonItem,
-  IonLabel
+  IonLabel,
+  loadingController
 } from '@ionic/vue';
-import {onMounted,onUnmounted, ref} from 'vue';
-import AMapLoader from '@amap/amap-jsapi-loader';
-import { useGlobalStore } from '../store/globalStore ';
+import AMapLoader from "@amap/amap-jsapi-loader";
+import {onMounted, onUnmounted, ref} from 'vue';
+import {useGlobalStore} from '../store/globalStore ';
 
 const store = useGlobalStore();
-const { locationRef, mapRef } = store;
-const searchResults = ref<string[]>([]);
-let placeSearch = null;
-onMounted( () => {
-  // await AMapLoader.load({
-  //   key: '23376e224c66bd2866d51f4930e197bb', // 替换为你的高德地图 API Key
-  //   version: '2.0',
-  //   plugins: ['AMap.PlaceSearch'],
-  // });
-  //
-  // console.log("=============");
-  // placeSearch = new AMap.PlaceSearch({
-  //   pageSize: 10, // 单页显示结果条数
-  //   pageIndex: 1, // 页码
-  // });
-// 加载定位插件
-  mapRef.value.plugin('AMap.PlaceSearch', () => {
+const {getLocation} = store;
+const searchResults = ref<any[]>([]);
+let placeSearch: any = null;
+const query = ref("")
+onMounted(() => {
+  AMapLoader.load({
+    key: import.meta.env.VITE_AMAP_KEY,
+    version: '2.0',
+    plugins: ['AMap.PlaceSearch', 'AMap.Geolocation'],
+  }).then((AMap) => {
     placeSearch = new AMap.PlaceSearch({
       pageSize: 10, // 单页显示结果条数
       pageIndex: 1, // 页码
     });
-
   });
 })
-const onSearch = (event: CustomEvent) => {
+onUnmounted(() => {
+  if (placeSearch) {
+    // 释放插件资源
+    placeSearch = null
+  }
+});
+const onSearch = async (event: CustomEvent) => {
   const value = event.detail.value;
+  const loading = await loadingController.create({
+    message: '加载中...',
+    duration: 10000,
+  });
 
+  loading.present();
   // 这里可以添加实际的搜索逻辑
   if (value) {
     // 示例：模拟搜索结果
@@ -82,15 +87,29 @@ const onSearch = (event: CustomEvent) => {
 
     // 使用高德地图插件进行搜索
     if (placeSearch) {
-      placeSearch.search(value,(status,result)=>{
-        if(status === 'complete'){
-          console.log(result);
-          searchResults.value=result.poiList.pois;
-        }else{
-          console.log(status);
-        }
+      const pos = getLocation()
+      if (pos.lng != 0 && pos.lat != 0) {
+        placeSearch.searchNearBy(value, new AMap.LngLat(pos.lng, pos.lat), (status: string, result: any) => {
+          if (status === 'complete') {
+            console.log(result);
+            searchResults.value = result.poiList.pois;
+          } else {
+            console.log(status);
+          }
+          loading.dismiss();
+        });
+      } else {
+        placeSearch.search(value, (status: string, result: any) => {
+          if (status === 'complete') {
+            console.log(result);
+            searchResults.value = result.poiList.pois;
+          } else {
+            console.log(status);
+          }
+          loading.dismiss();
+        });
+      }
 
-      });
     }
   } else {
     searchResults.value = [];
@@ -100,17 +119,15 @@ const onSearch = (event: CustomEvent) => {
 </script>
 
 <style scoped>
-/* 你的样式 */
-.search-icon {
-  width: 100px; /* 设置图片宽度 */
-  height: 100px; /* 设置图片高度 */
-  margin: 20px auto; /* 居中显示 */
-  display: block;
-}
-
 .no-results {
   text-align: center;
   color: #999;
   padding: 20px;
+}
+
+.searchBar {
+  background: #FFF;
+  z-index: 999;
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
 }
 </style>
