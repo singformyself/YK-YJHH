@@ -94,13 +94,16 @@ import {
   keyOutline, 
   logInOutline,
 } from 'ionicons/icons';
-import { ref, computed, onUnmounted } from 'vue';
-
+import {ref, computed, onUnmounted } from 'vue';
+// 引入 useRouter 函数
+import { useRouter } from 'vue-router';
+// 获取路由实例
+const router = useRouter();
 // 响应式状态
 const phone = ref('');
 const verificationCode = ref('');
 const countdown = ref(0);
-const timer = ref<number | null>(null);
+const timer = ref<ReturnType<typeof setInterval> | null>(null);
 
 // 计算属性
 const canSendCode = computed(() => {
@@ -126,7 +129,7 @@ const startCountdown = () => {
         timer.value = null;
       }
     }
-  }, 1000);
+  }, 1000) as unknown as ReturnType<typeof setInterval>;
 };
 
 const sendVerificationCode = () => {
@@ -134,9 +137,9 @@ const sendVerificationCode = () => {
   // TODO: 实现发送验证码的逻辑
   startCountdown();
 };
-
 const handleLogin = () => {
   if (!canLogin.value) return;
+  router.push('/tabs/tab1');
   // TODO: 实现登录逻辑
   console.log('登录信息：', {
     phone: phone.value,
