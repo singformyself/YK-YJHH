@@ -9,14 +9,16 @@
     </ion-header>
     <!-- 搜索输入框 -->
     <ion-searchbar class="searchBar" araria-hidden="false" id="search" @ionChange="onSearch"
-                   placeholder="请输入搜索内容"></ion-searchbar>
+                   placeholder="请输入地址搜索"></ion-searchbar>
     <ion-content :fullscreen="true" class="ion-padding">
       <!-- 搜索结果列表 -->
       <ion-list v-if="searchResults.length > 0" :aria-hidden="searchResults.length === 0">
         <ion-item v-for="(result, index) in searchResults" :key="index" @click="onResultClick(result)">
           <ion-label>
             <h3>{{ result.name }}</h3>
-            <p style="font-size: small">{{ result.address }}</p>
+            <p style="font-size: small">{{ result.address }} <span v-if="result.disable">距离：{{
+                result.distance
+              }}</span></p>
           </ion-label>
         </ion-item>
       </ion-list>
@@ -37,7 +39,6 @@ import {
   IonToolbar,
   IonButtons,
   IonBackButton,
-  IonTitle,
   IonContent,
   IonSearchbar,
   IonList,
@@ -48,7 +49,10 @@ import {
 import AMapLoader from "@amap/amap-jsapi-loader";
 import {onMounted, onUnmounted, ref} from 'vue';
 import {useGlobalStore} from '../store/globalStore ';
-
+// 引入 useRouter 函数
+import {useRouter} from "vue-router";
+// 获取路由实例
+const router = useRouter();
 const store = useGlobalStore();
 const {getLocation} = store;
 const searchResults = ref<any[]>([]);
@@ -87,18 +91,18 @@ const onSearch = async (event: CustomEvent) => {
 
     // 使用高德地图插件进行搜索
     if (placeSearch) {
-      const pos = getLocation()
-      if (pos.lng != 0 && pos.lat != 0) {
-        placeSearch.searchNearBy(value, new AMap.LngLat(pos.lng, pos.lat), (status: string, result: any) => {
-          if (status === 'complete') {
-            console.log(result);
-            searchResults.value = result.poiList.pois;
-          } else {
-            console.log(status);
-          }
-          loading.dismiss();
-        });
-      } else {
+      // const pos = getLocation()
+      // if (pos.lng != 0 && pos.lat != 0) {
+      //   placeSearch.searchNearBy(value, new AMap.LngLat(pos.lng, pos.lat), (status: string, result: any) => {
+      //     if (status === 'complete') {
+      //       console.log(result);
+      //       searchResults.value = result.poiList.pois;
+      //     } else {
+      //       console.log(status);
+      //     }
+      //     loading.dismiss();
+      //   });
+     // } else {
         placeSearch.search(value, (status: string, result: any) => {
           if (status === 'complete') {
             console.log(result);
@@ -108,14 +112,16 @@ const onSearch = async (event: CustomEvent) => {
           }
           loading.dismiss();
         });
-      }
+      //}
 
     }
   } else {
     searchResults.value = [];
   }
 };
-
+const onResultClick = ((result: any) => {
+  router.push("/driving?lng=" + result.location.lng + "&lat=" + result.location.lat)
+})
 </script>
 
 <style scoped>

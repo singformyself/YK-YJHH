@@ -6,7 +6,7 @@
         <ion-card-content>
           <ion-button @click="search" color="light" shape="round" expand="block" style="display: flex;flex-direction: row">
             <ion-img style="width: 28px;opacity: 0.5" src="/search-outline.svg" alt="Search Icon"></ion-img>
-            搜索目的地
+            搜索护航目的地
           </ion-button>
         </ion-card-content>
       </ion-card>
@@ -37,7 +37,7 @@ let aMap:any=null;
 // 定义定位实例变量
 let geolocation:any = null;
 // 定义监听ID变量
-let watchId:any = null;
+//let watchId:any = null;
 onMounted(() => {
   // 加载高德地图 JSAPI
   AMapLoader.load({
@@ -81,9 +81,9 @@ onUnmounted(() => {
     }
   }
   // 停止监听位置变化
-  if (geolocation && watchId) {
-    geolocation.clearWatch(watchId);
-  }
+  // if (geolocation && watchId) {
+  //   geolocation.clearWatch(watchId);
+  // }
 });
 
 // 处理定位结果的函数

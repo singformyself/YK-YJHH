@@ -3,6 +3,7 @@ import {RouteRecordRaw} from 'vue-router';
 import TabsPage from '../views/TabsPage.vue'
 import LoginPage from '../views/LoginPage.vue'
 import SearchPage from '../views/SearchPage.vue'
+import DrivingPage from "../views/DrivingPage.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -12,6 +13,11 @@ const routes: Array<RouteRecordRaw> = [
     {
         path: '/search',
         component: SearchPage
+    },
+    {
+        path: '/driving',
+        component: DrivingPage,
+        props:true
     },
     {
         path: '/tabs/',
